@@ -1,79 +1,44 @@
 const express = require('express');
 const cors = require('cors');
-const WebSocket = require('ws');
-
+const path = require('path');
+const mongoose = require('mongoose');
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Connect to MongoDB
+mongoose.connect('mongodb://localhost:27017/cryptopulse', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+
+// Models
+const Favorite = mongoose.model('Favorite', { symbol: String });
 
 app.use(cors());
 app.use(express.json());
 
-// Test route
-app.get('/api/ping', (req, res) => {
-  res.json({ message: 'CryptoPulse backend is working 🚀' });
+// API: Get and Save Favorites
+app.get('/api/favorites', async (req, res) => {
+  const favorites = await Favorite.find({});
+  res.json(favorites);
 });
 
-// Start HTTP server
-const server = app.listen(PORT, () => {
-  console.log(`HTTP Server running on port ${PORT}`);
+app.post('/api/favorites', async (req, res) => {
+  const { symbol } = req.body;
+  await Favorite.create({ symbol });
+  res.status(201).send();
 });
 
-// Create WebSocket Server for frontend clients
-const wss = new WebSocket.Server({ server });
+app.delete('/api/favorites/:symbol', async (req, res) => {
+  await Favorite.deleteOne({ symbol: req.params.symbol });
+  res.status(204).send();
+});
 
-// CoinCap WebSocket connection
-const coinCapSocket = new WebSocket(
-  'wss://ws.coincap.io/prices?assets=bitcoin,ethereum,solana,cardano,polkadot'
+// Serve static files
+app.use(express.static(path.join(__dirname, '../client/build')));
+
+app.get('*', (req, res) =>
+  res.sendFile(path.resolve(__dirname, '../client/build/index.html'))
 );
 
-let latestPrices = {}; // store latest prices
-
-// Handle CoinCap messages
-coinCapSocket.on('message', (msg) => {
-  try {
-    const data = JSON.parse(msg.toString());
-    latestPrices = { ...latestPrices, ...data };
-
-    // Broadcast to frontend clients
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ type: 'price-update', data: latestPrices }));
-      }
-    });
-  } catch (err) {
-    console.error('Failed to parse message from CoinCap:', err.message);
-  }
-});
-
-coinCapSocket.on('open', () => {
-  console.log('Connected to CoinCap WebSocket ✅');
-});
-
-coinCapSocket.on('error', (err) => {
-  console.error('CoinCap WebSocket error:', err.message);
-});
-
-coinCapSocket.on('close', () => {
-  console.log('CoinCap WebSocket closed ❌');
-});
-
-// Handle frontend WebSocket connections
-wss.on('connection', (socket, req) => {
-  console.log('Frontend WebSocket connected');
-
-  // Optional: Validate origin
-  // const origin = req.headers.origin;
-  // if (origin !== 'http://localhost:3000') {
-  //   socket.terminate();
-  //   return;
-  // }
-
-  // Send initial prices
-  if (Object.keys(latestPrices).length > 0) {
-    socket.send(JSON.stringify({ type: 'price-update', data: latestPrices }));
-  }
-
-  socket.on('close', () => {
-    console.log('Frontend WebSocket disconnected');
-  });
-});
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
