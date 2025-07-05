@@ -135,7 +135,7 @@ const Home = () => {
               e.preventDefault();
               setLoading(true);
               try {
-                const response = await axios.put("https://cryptopulse-ovx6.vercel.app//api/favorites", {
+                const response = await axios.put("https://cryptopulse-ovx6.vercel.app/api/favorites", {
                   symbol: coin.symbol,
                   name: coin.name,
                   image: coin.image,
