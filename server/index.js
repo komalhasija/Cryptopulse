@@ -9,9 +9,7 @@ const axios = require('axios');
 const PDFDocument = require('pdfkit');
 
 
-app.use(cors({
-  origin: 'http://localhost:5173'  // your React app URL
-}));
+app.use(cors());
 
 app.use(express.json());
 mongoose.connect('mongodb+srv://komalhasija4020:komal@cluster0.uqh7o0g.mongodb.net/', {
@@ -151,6 +149,10 @@ app.get('/api/coins-report', async (req, res) => {
 
 
 // Serve static files
-app.use(express.static(path.join(__dirname, '../client/build')));
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
+// app.get('*',(req,res)=>{
+//   res.sendFile(path.resolve(__dirname,"client","dist","index.html"));
+// })
 
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
