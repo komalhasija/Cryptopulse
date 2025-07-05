@@ -4,15 +4,19 @@ import { ImageContext } from "../context/ImageContext";
 import { Moon, Sun, Download } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext";
+import axios from 'axios';
+
 
 const Home = () => {
   const { allCoin, currency } = useContext(CoinContext);
   const { images } = useContext(ImageContext);
   const { theme, darkMode, toggleTheme } = useContext(ThemeContext);
 
+
   const [combinedCoinData, setCombinedCoinData] = useState([]);
   const [displayCoin, setDisplayCoin] = useState([]);
   const [input, setInput] = useState("");
+  
 
   // Merge CoinCap data with images from CoinGecko
   useEffect(() => {
@@ -23,8 +27,7 @@ const Home = () => {
       return {
         ...coin,
         image: matched?.image || "/fallback-icon.png",
-        price_change_percentage_24h:
-          matched?.price_change_percentage_24h || coin.changePercent24Hr,
+        price_change_percentage_24h: matched?.price_change_percentage_24h || coin.changePercent24Hr,
       };
     });
     setCombinedCoinData(merged);
@@ -44,17 +47,39 @@ const Home = () => {
     setDisplayCoin(filtered);
   };
 
-  const handleDownload = () => {
-    window.open("http://localhost:5000/api/coins-report", "_blank");
-  };
+const handleDownload = async () => {
+  try {
+    const response = await axios.get('http://localhost:5000/api/coins-report', {
+      responseType: 'blob', // IMPORTANT: tells axios to handle binary data
+    });
+
+    // Axios doesn't have response.ok, check status instead
+    if (response.status !== 200) {
+      throw new Error('Network response was not ok');
+    }
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'crypto_report.pdf';
+    document.body.appendChild(a);
+    a.click();
+
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Download failed:', error);
+  }
+};
+
+
 
   return (
     <div className={`${theme.bg} ${theme.text} min-h-screen`}>
       <div className="flex min-h-screen">
         {/* Sidebar */}
-        <aside
-          className={`w-72 ${theme.panel} p-6 space-y-6 border-r border-gray-300 sticky top-0 h-screen`}
-        >
+        <aside className={`w-72 ${theme.panel} p-6 space-y-6 border-r border-gray-300 sticky top-0 h-screen`}>
           <h2 className="text-3xl font-bold tracking-wide">CryptoPulse</h2>
 
           <form onSubmit={searchHandler} className="flex flex-col gap-3">
@@ -91,9 +116,7 @@ const Home = () => {
         </aside>
 
         {/* Main Grid */}
-        <main
-          className={`flex-1 p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 ${theme.bg}`}
-        >
+        <main className={`flex-1 p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 ${theme.bg}`}>
           {displayCoin.slice(0, 20).map((coin) => (
             <Link
               to={`/coin/${coin.id}`}
@@ -101,12 +124,14 @@ const Home = () => {
               className={`bg-gradient-to-br ${theme.card} rounded-2xl shadow-md p-5 hover:scale-105 hover:shadow-xl transition-transform duration-300`}
             >
               <div className="flex items-center gap-4 mb-4">
-                <img src={coin.image} alt={coin.name} className="w-12 h-12" />
+                <img
+                  src={coin.image}
+                  alt={coin.name}
+                  className="w-12 h-12"
+                />
                 <div>
                   <h3 className="text-lg font-semibold">{coin.name}</h3>
-                  <span className={`text-sm ${theme.subtext}`}>
-                    ({coin.symbol.toUpperCase()})
-                  </span>
+                  <span className={`text-sm ${theme.subtext}`}>({coin.symbol.toUpperCase()})</span>
                 </div>
               </div>
 
@@ -114,18 +139,11 @@ const Home = () => {
                 <p className="text-xl font-bold">
                   {currency.symbol} {parseFloat(coin.priceUsd).toFixed(2)}
                 </p>
-                <p
-                  className={`font-medium ${
-                    coin.price_change_percentage_24h > 0
-                      ? "text-green-500"
-                      : "text-red-500"
-                  }`}
-                >
+                <p className={`font-medium ${coin.price_change_percentage_24h > 0 ? "text-green-500" : "text-red-500"}`}>
                   24h: {parseFloat(coin.price_change_percentage_24h).toFixed(2)}%
                 </p>
                 <p className={`text-sm ${theme.subtext}`}>
-                  Market Cap: {currency.symbol}{" "}
-                  {parseFloat(coin.marketCapUsd).toLocaleString()}
+                  Market Cap: {currency.symbol} {parseFloat(coin.marketCapUsd).toLocaleString()}
                 </p>
               </div>
             </Link>
