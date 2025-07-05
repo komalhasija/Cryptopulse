@@ -1,28 +1,47 @@
-import React, { useEffect, useState } from 'react'
-import Chart from 'react-google-charts'
+import React, { useEffect, useState } from 'react';
+import Chart from 'react-google-charts';
 
-const LineChart = ({historicalData}) => {
+const LineChart = ({ historicalData, currency }) => {
+  const [data, setData] = useState([["Date", "Price"]]);
+  
 
-    const [data, setData] = useState([["Date", "Prices"]])
+  useEffect(() => {
+    console.log("Chart Data:", historicalData?.prices);
+    const dataCopy = [["Date", "Price"]];
+    if (historicalData?.prices?.length > 0) {
+      historicalData.prices.forEach((item) => {
+        dataCopy.push([new Date(item[0]), parseFloat(item[1])]);
+      });
+      setData(dataCopy);
+    }
+  }, [historicalData]);
 
-    useEffect(() => {
-        let dataCopy = [["Date", "Prices"]];
-        if(historicalData.prices) {
-            historicalData.prices.map((item) => {
-                dataCopy.push([`${new Date(item[0]).toLocaleDateString().slice(0, -5)}`, item[1]])
-            })
-            setData(dataCopy);
-        } // 06/18/2024
-    }, [historicalData])
+  if (!historicalData || !historicalData.prices) {
+    return <div className="text-center text-gray-600">Loading chart...</div>;
+  }
 
   return (
-    <Chart 
-        chartType='LineChart'
-        data= {data}
-        height= "100%"
-        legendToggle
+    <Chart
+      chartType="LineChart"
+      data={data}
+      height="400px"
+      options={{
+        title: `Price Trend (${currency?.toUpperCase()})`,
+        hAxis: {
+          title: "Date",
+          format: "MMM dd",
+          gridlines: { count: 6 },
+        },
+        vAxis: {
+          title: `Price (${currency?.toUpperCase()})`,
+        },
+        legend: "none",
+        colors: ["#1c91c0"],
+        curveType: "function",
+        pointSize: 4,
+      }}
     />
-  )
-}
+  );
+};
 
-export default LineChart
+export default LineChart;

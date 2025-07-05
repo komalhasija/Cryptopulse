@@ -12,9 +12,9 @@ export default function Header() {
   }, [isDark]);
 
   return (
-    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8 ">
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8 m-6">
       <div>
-        <h1 className="text-3xl sm:text-4xl font-bold mb-2 sm:mb-4">CryptoPulse</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold mb-2 sm:mb-4 ">CryptoPulse</h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base">
           Real-Time Cryptocurrency Tracker
         </p>
