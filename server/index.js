@@ -10,16 +10,10 @@ const PDFDocument = require('pdfkit');
 
 
 app.use(cors({
-  origin: 'https://cryptopulse-5lv5.vercel.app', // frontend URL
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true,
+  origin: 'http://localhost:5173'  // your React app URL
 }));
 
-// Optional: respond to OPTIONS requests explicitly
-app.options('*', cors());
-
 app.use(express.json());
-
 mongoose.connect('mongodb+srv://komalhasija4020:komal@cluster0.uqh7o0g.mongodb.net/', {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -41,24 +35,21 @@ const favoriteSchema = new mongoose.Schema({
 const Favorite = mongoose.model("Favorite", favoriteSchema);
 
 // Add to favorites
-app.put("/api/favorites", async (req, res) => {
+app.post("/api/favorites", async (req, res) => {
   const { symbol, name, image } = req.body;
 
   try {
-    const existing = await Favorite.findOne({ symbol });
+    const exists = await Favorite.findOne({ symbol });
+    if (exists) return res.status(200).json({ message: "Already favorited" });
 
-    if (existing) {
-      await Favorite.deleteOne({ symbol });
-      return res.status(200).json({ message: "Removed from favorites", status: "removed" });
-    } else {
-      const newFav = new Favorite({ symbol, name, image });
-      await newFav.save();
-      return res.status(201).json({ message: "Added to favorites", status: "added" });
-    }
-  } catch (error) {
-    return res.status(500).json({ error: "Failed to toggle favorite" });
+    const fav = new Favorite({ symbol, name, image });
+    await fav.save();
+    res.status(201).json({ message: "Added to favorites" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to save favorite" });
   }
 });
+
 // Get all favorites
 app.get("/api/favorites", async (req, res) => {
   try {
@@ -73,12 +64,14 @@ app.get("/api/favorites", async (req, res) => {
 
 app.get('/api/coins-report', async (req, res) => {
   try {
-    const response = await axios.get(
+    const response = await fetch(
         `https://rest.coincap.io/v3/assets?apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`,
         
       );
    
-    const coins = response.data.data;
+    const json = await response.json(); // parse JSON from fetch response
+    const coins = json.data;
+
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -160,8 +153,8 @@ app.get('/api/coins-report', async (req, res) => {
 // Serve static files
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
-// app.get('*',(req,res)=>{
-//   res.sendFile(path.resolve(__dirname,"client","dist","index.html"));
-// })
+app.get('*',(req,res)=>{
+  res.sendFile(path.resolve(__dirname,"client","dist"))
+})
 
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
