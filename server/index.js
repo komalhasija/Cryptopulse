@@ -7,10 +7,23 @@ const PORT = process.env.PORT || 5000;
 require('dotenv').config();
 const axios = require('axios');
 const PDFDocument = require('pdfkit');
+const cors = require('cors');
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://cryptopulse-1.onrender.com'
+];
 
 app.use(cors({
-  origin: 'http://localhost:5173'  // your React app URL
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true); // allow non-browser requests like Postman
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `The CORS policy for this site does not allow access from the specified Origin.`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true // if you need to send cookies/auth headers
 }));
 
 app.use(express.json());
