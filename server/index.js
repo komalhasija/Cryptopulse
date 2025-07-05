@@ -43,7 +43,7 @@ app.get('/api/coins-report', async (req, res) => {
     doc.pipe(res);
 
     // Title
-    doc.fontSize(22).fillColor('#4B0082').text('📊 CryptoPulse Coin Report', { align: 'center' });
+    doc.fontSize(22).fillColor('#4B0082').text(' CryptoPulse Coin Report', { align: 'center' });
     doc.moveDown(1);
 
     // Subtitle / date
