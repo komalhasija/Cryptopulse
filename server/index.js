@@ -17,22 +17,7 @@ const Favorite = mongoose.model('Favorite', { symbol: String });
 app.use(cors());
 app.use(express.json());
 
-// API: Get and Save Favorites
-app.get('/api/favorites', async (req, res) => {
-  const favorites = await Favorite.find({});
-  res.json(favorites);
-});
 
-app.post('/api/favorites', async (req, res) => {
-  const { symbol } = req.body;
-  await Favorite.create({ symbol });
-  res.status(201).send();
-});
-
-app.delete('/api/favorites/:symbol', async (req, res) => {
-  await Favorite.deleteOne({ symbol: req.params.symbol });
-  res.status(204).send();
-});
 
 // Serve static files
 app.use(express.static(path.join(__dirname, '../client/build')));

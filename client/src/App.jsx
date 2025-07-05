@@ -49,7 +49,7 @@ import Home from "./pages/Home";
 const App = () => {
   return (
     <div className="min-h-screen flex flex-col justify-between bg-white dark:bg-[#121212] text-black dark:text-white transition-colors duration-300">
-      <Header />
+     
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<Home />} />

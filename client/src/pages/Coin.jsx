@@ -1,7 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { CoinContext } from "../context/CoinContext";
+import { ThemeContext } from "../context/ThemeContext";
 import LineChart from "../components/LineChart";
+import { Moon, Sun } from "lucide-react";
 
 const Coin = () => {
   const { coinId } = useParams();
@@ -9,9 +11,13 @@ const Coin = () => {
   const [historicalData, setHistoricalData] = useState(null);
   const { currency } = useContext(CoinContext);
 
+  const { theme, darkMode, toggleTheme } = useContext(ThemeContext);
+
   const fetchCoinData = async () => {
     try {
-      const res = await fetch(`https://rest.coincap.io/v3/assets/${coinId}?apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`);
+      const res = await fetch(
+        `https://rest.coincap.io/v3/assets/${coinId}?apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`
+      );
       const data = await res.json();
       setCoinData(data.data);
     } catch (err) {
@@ -20,34 +26,32 @@ const Coin = () => {
   };
 
   const fetchHistoricalData = async () => {
-  try {
-    const res = await fetch(
-      `https://rest.coincap.io/v3/assets/${coinId}/history?interval=d1&apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`
-    );
-    const result = await res.json();
+    try {
+      const res = await fetch(
+        `https://rest.coincap.io/v3/assets/${coinId}/history?interval=d1&apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`
+      );
+      const result = await res.json();
 
-    // Format for chart: [timestamp, price]
-    const prices = result.data.map(entry => [
-      new Date(entry.time).getTime(),
-      parseFloat(entry.priceUsd),
-    ]);
+      const prices = result.data.map((entry) => [
+        new Date(entry.time).getTime(),
+        parseFloat(entry.priceUsd),
+      ]);
 
-    setHistoricalData({ prices }); // must be { prices: [...] }
+      setHistoricalData({ prices });
+    } catch (err) {
+      console.error("Error fetching historical data:", err);
+    }
+  };
 
-  } catch (err) {
-    console.error("Error fetching historical data:", err);
-  }
-};
-
-  // Fetch on mount or currency change
   useEffect(() => {
     fetchCoinData();
     fetchHistoricalData();
-  }, [currency]);
+  }, [currency, coinId]);
 
-  // WebSocket for live price
   useEffect(() => {
-    const ws = new WebSocket(`wss://wss.coincap.io/prices?assets=${coinId}&apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`);
+    const ws = new WebSocket(
+      `wss://wss.coincap.io/prices?assets=${coinId}&apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`
+    );
 
     ws.onmessage = (msg) => {
       const data = JSON.parse(msg.data);
@@ -62,29 +66,40 @@ const Coin = () => {
       console.error("WebSocket error:", err);
     };
 
-    return () => ws.close(); // cleanup on unmount
+    return () => ws.close();
   }, [coinId]);
 
   if (!coinData || !historicalData) {
     return (
-      <div className="grid place-items-center min-h-[80vh]">
+      <div
+        className={`grid place-items-center min-h-[80vh] ${theme.bg} ${theme.text}`}
+      >
         <div className="w-16 h-16 border-4 border-gray-300 border-t-purple-700 rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="px-5 py-10">
-      <div className="flex flex-col items-center gap-5 mb-12 mt-10">
-        <img
-           src={`https://rest.coincap.io/assets/icons/${coinData.symbol.toLowerCase()}@2x.png`}
-           alt={coinData.name}
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = "/fallback-icon.png";
-          }}
-          className="w-24 h-24"
-        />
+    <div className={`${theme.bg} ${theme.text} min-h-screen px-5 py-5`}>
+      {/* Theme toggle button */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={toggleTheme}
+          className={`flex items-center gap-2 py-2 px-4 rounded-md ${theme.button}`}
+        >
+          {darkMode ? (
+            <>
+              <Sun className="w-4 h-4" /> Light Mode
+            </>
+          ) : (
+            <>
+              <Moon className="w-4 h-4" /> Dark Mode
+            </>
+          )}
+        </button>
+      </div>
+
+      <div className="flex flex-col items-center gap-5 mb-8 mt-5">
         <p className="text-4xl font-medium">
           <b>
             {coinData.name} ({coinData.symbol.toUpperCase()})
@@ -92,42 +107,42 @@ const Coin = () => {
         </p>
       </div>
 
-      <div className="max-w-xl mx-auto h-64">
-        <LineChart historicalData={historicalData} currency={currency.value} />
-      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-6xl mx-auto py-10">
+        {/* Left: Line Chart */}
+        <div className="h-64">
+          <LineChart historicalData={historicalData} currency={currency.name} />
+        </div>
 
-      <div className="max-w-xl mx-auto mt-12 space-y-4">
-        {[
-          ["Crypto Market Rank", `#${coinData.rank}`],
-          [
-            "Current Price",
-            `${currency.symbol} ${parseFloat(coinData.priceUsd).toFixed(2)}`,
-          ],
-          [
-            "Market Cap",
-            `${currency.symbol} ${parseFloat(
-              coinData.marketCapUsd
-            ).toLocaleString()}`,
-          ],
-          [
-            "24 Hour Volume",
-            `${currency.symbol} ${parseFloat(
-              coinData.volumeUsd24Hr
-            ).toLocaleString()}`,
-          ],
-          [
-            "Change (24H)",
-            `${parseFloat(coinData.changePercent24Hr).toFixed(2)}%`,
-          ],
-        ].map(([label, value], idx) => (
-          <ul
-            key={idx}
-            className="flex justify-between border-b border-gray-600 py-2 text-sm sm:text-base"
-          >
-            <li>{label}</li>
-            <li className="font-light">{value}</li>
-          </ul>
-        ))}
+        {/* Right: Coin Stats */}
+        <div className="space-y-4 m-5">
+          {[
+            ["Crypto Market Rank", `#${coinData.rank}`],
+            [
+              "Current Price",
+              `${currency.symbol} ${parseFloat(coinData.priceUsd).toFixed(2)}`,
+            ],
+            [
+              "Market Cap",
+              `${currency.symbol} ${parseFloat(coinData.marketCapUsd).toLocaleString()}`,
+            ],
+            [
+              "24 Hour Volume",
+              `${currency.symbol} ${parseFloat(coinData.volumeUsd24Hr).toLocaleString()}`,
+            ],
+            [
+              "Change (24H)",
+              `${parseFloat(coinData.changePercent24Hr).toFixed(2)}%`,
+            ],
+          ].map(([label, value], idx) => (
+            <ul
+              key={idx}
+              className="flex justify-between border-b border-gray-600 py-2 text-sm sm:text-base"
+            >
+              <li>{label}</li>
+              <li className="font-light">{value}</li>
+            </ul>
+          ))}
+        </div>
       </div>
     </div>
   );

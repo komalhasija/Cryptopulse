@@ -3,6 +3,14 @@ import { useState, useEffect } from "react";
 export default function Header() {
   const [isDark, setIsDark] = useState(false);
 
+  const toggleTheme = () => {
+    setDarkMode((prev) => !prev);
+  };
+
+  const handleDownload = () => {
+    alert("Download clicked — implement your logic here!");
+  };
+
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add("dark");
@@ -19,9 +27,10 @@ export default function Header() {
           Real-Time Cryptocurrency Tracker
         </p>
       </div>
+      
 
       <div className="flex gap-3 sm:gap-4 flex-wrap">
-        <button className="bg-[#1E213A] text-white px-4 py-2 rounded-xl text-sm hover:opacity-90 transition">
+        <button onClick={handleDownload} className="bg-[#1E213A] text-white px-4 py-2 rounded-xl text-sm hover:opacity-90 transition ">
           Download Report
         </button>
 

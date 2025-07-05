@@ -3,7 +3,7 @@ import Chart from 'react-google-charts';
 
 const LineChart = ({ historicalData, currency }) => {
   const [data, setData] = useState([["Date", "Price"]]);
-  
+
 
   useEffect(() => {
     console.log("Chart Data:", historicalData?.prices);
@@ -24,7 +24,9 @@ const LineChart = ({ historicalData, currency }) => {
     <Chart
       chartType="LineChart"
       data={data}
-      height="400px"
+      width="600px"     // makes chart fill container width
+      height="500px"
+
       options={{
         title: `Price Trend (${currency?.toUpperCase()})`,
         hAxis: {
