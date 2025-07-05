@@ -128,23 +128,28 @@ const Home = () => {
         <main className={`flex-1 p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 ${theme.bg}`}>
           {displayCoin.slice(0, 20).map((coin) => {
             const isFav = favorites.includes(coin.symbol);
-
             const handleFavClick = async (e) => {
               e.preventDefault();
               setLoading(true);
               try {
-                await axios.post("http://localhost:5000/api/favorites", {
+                const res = await axios.post("http://localhost:5000/api/favorites", {
                   symbol: coin.symbol,
                   name: coin.name,
                   image: coin.image,
                 });
-                setFavorites((prev) => [...prev, coin.symbol]);
+
+                if (res.data.status === "added") {
+                  setFavorites((prev) => [...prev, coin.symbol]);
+                } else if (res.data.status === "removed") {
+                  setFavorites((prev) => prev.filter((sym) => sym !== coin.symbol));
+                }
               } catch (err) {
-                console.error("Error adding to favorites:", err);
+                console.error("Error toggling favorite:", err);
               } finally {
                 setLoading(false);
               }
             };
+
 
             return (
               <Link

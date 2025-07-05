@@ -18,12 +18,12 @@ mongoose.connect('mongodb+srv://komalhasija4020:komal@cluster0.uqh7o0g.mongodb.n
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => {
-  console.log('✅ Connected to MongoDB Atlas successfully!');
-})
-.catch((err) => {
-  console.error('❌ MongoDB connection error:', err);
-});
+  .then(() => {
+    console.log('✅ Connected to MongoDB Atlas successfully!');
+  })
+  .catch((err) => {
+    console.error('❌ MongoDB connection error:', err);
+  });
 
 const favoriteSchema = new mongoose.Schema({
   symbol: String,
@@ -39,14 +39,18 @@ app.post("/api/favorites", async (req, res) => {
   const { symbol, name, image } = req.body;
 
   try {
-    const exists = await Favorite.findOne({ symbol });
-    if (exists) return res.status(200).json({ message: "Already favorited" });
+    const existing = await Favorite.findOne({ symbol });
 
-    const fav = new Favorite({ symbol, name, image });
-    await fav.save();
-    res.status(201).json({ message: "Added to favorites" });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to save favorite" });
+    if (existing) {
+      await Favorite.deleteOne({ symbol });
+      return res.status(200).json({ message: "Removed from favorites", status: "removed" });
+    } else {
+      const newFav = new Favorite({ symbol, name, image });
+      await newFav.save();
+      return res.status(201).json({ message: "Added to favorites", status: "added" });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to toggle favorite" });
   }
 });
 
@@ -64,13 +68,13 @@ app.get("/api/favorites", async (req, res) => {
 
 app.get('/api/coins-report', async (req, res) => {
   try {
-    const response = await fetch(
-        `https://rest.coincap.io/v3/assets?apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`,
-        
-      );
+    const response = await axios.get(
+      `https://rest.coincap.io/v3/assets?apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`,
+
+    );
+
    
-    const json = await response.json(); // parse JSON from fetch response
-    const coins = json.data;
+    const coins = response.data.data;
 
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
 
@@ -148,13 +152,5 @@ app.get('/api/coins-report', async (req, res) => {
 });
 
 
-
-
-// Serve static files
-app.use(express.static(path.join(__dirname, '../client/dist')));
-
-app.get('*',(req,res)=>{
-  res.sendFile(path.resolve(__dirname,"client","dist"))
-})
 
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
