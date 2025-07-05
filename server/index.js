@@ -62,7 +62,7 @@ app.get("/api/favorites", async (req, res) => {
 
 app.get('/api/coins-report', async (req, res) => {
   try {
-    const response = await fetch(
+    const response = await axios.get(
         `https://rest.coincap.io/v3/assets?apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`,
         
       );
