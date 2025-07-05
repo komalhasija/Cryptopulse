@@ -9,7 +9,14 @@ const axios = require('axios');
 const PDFDocument = require('pdfkit');
 
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://cryptopulse-5lv5.vercel.app', // frontend URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+}));
+
+// Optional: respond to OPTIONS requests explicitly
+app.options('*', cors());
 
 app.use(express.json());
 mongoose.connect('mongodb+srv://komalhasija4020:komal@cluster0.uqh7o0g.mongodb.net/', {
