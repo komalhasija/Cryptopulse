@@ -13,6 +13,7 @@ app.use(cors({
   origin: 'http://localhost:5173'  // your React app URL
 }));
 
+app.use(express.json());
 mongoose.connect('mongodb+srv://komalhasija4020:komal@cluster0.uqh7o0g.mongodb.net/', {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -23,6 +24,42 @@ mongoose.connect('mongodb+srv://komalhasija4020:komal@cluster0.uqh7o0g.mongodb.n
 .catch((err) => {
   console.error('❌ MongoDB connection error:', err);
 });
+
+const favoriteSchema = new mongoose.Schema({
+  symbol: String,
+  name: String,
+  image: String,
+});
+
+
+const Favorite = mongoose.model("Favorite", favoriteSchema);
+
+// Add to favorites
+app.post("/api/favorites", async (req, res) => {
+  const { symbol, name, image } = req.body;
+
+  try {
+    const exists = await Favorite.findOne({ symbol });
+    if (exists) return res.status(200).json({ message: "Already favorited" });
+
+    const fav = new Favorite({ symbol, name, image });
+    await fav.save();
+    res.status(201).json({ message: "Added to favorites" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to save favorite" });
+  }
+});
+
+// Get all favorites
+app.get("/api/favorites", async (req, res) => {
+  try {
+    const favorites = await Favorite.find();
+    res.json(favorites);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch favorites" });
+  }
+});
+
 
 
 app.get('/api/coins-report', async (req, res) => {
@@ -111,8 +148,7 @@ app.get('/api/coins-report', async (req, res) => {
 });
 
 
-app.use(cors());
-app.use(express.json());
+
 
 // Serve static files
 app.use(express.static(path.join(__dirname, '../client/build')));
