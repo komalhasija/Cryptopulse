@@ -20,7 +20,7 @@ const Home = () => {
   // Fetch favorites from backend
   useEffect(() => {
     axios
-      .get("https://cryptopulse-0kea.onrender.com/api/favorites")
+      .get("http://localhost:5000/api/favorites")
       .then((res) => setFavorites(res.data.map((fav) => fav.symbol)))
       .catch((err) => console.error("Error fetching favorites", err));
   }, []);
@@ -65,7 +65,7 @@ const Home = () => {
 
   const handleDownload = async () => {
     try {
-      const response = await axios.get("https://cryptopulse-0kea.onrender.com/api/coins-report", {
+      const response = await axios.get("http://localhost:5000/api/coins-report", {
         responseType: "blob",
       });
 
@@ -133,7 +133,7 @@ const Home = () => {
               e.preventDefault();
               setLoading(true);
               try {
-                await axios.post("https://cryptopulse-0kea.onrender.com/api/favorites", {
+                await axios.post("http://localhost:5000/api/favorites", {
                   symbol: coin.symbol,
                   name: coin.name,
                   image: coin.image,
