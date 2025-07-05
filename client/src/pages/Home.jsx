@@ -63,6 +63,8 @@ const Home = () => {
     setDisplayCoin(filtered);
   };
 
+
+
   const handleDownload = async () => {
     try {
       const response = await axios.get("http://localhost:5000/api/coins-report", {
@@ -133,14 +135,19 @@ const Home = () => {
               e.preventDefault();
               setLoading(true);
               try {
-                await axios.post("http://localhost:5000/api/favorites", {
+                const response = await axios.put("http://localhost:5000/api/favorites", {
                   symbol: coin.symbol,
                   name: coin.name,
                   image: coin.image,
                 });
-                setFavorites((prev) => [...prev, coin.symbol]);
+
+                if (response.data.status === "removed") {
+                  setFavorites((prev) => prev.filter((sym) => sym !== coin.symbol));
+                } else if (response.data.status === "added") {
+                  setFavorites((prev) => [...prev, coin.symbol]);
+                }
               } catch (err) {
-                console.error("Error adding to favorites:", err);
+                console.error("Toggle favorite failed:", err);
               } finally {
                 setLoading(false);
               }

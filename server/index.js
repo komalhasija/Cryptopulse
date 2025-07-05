@@ -33,21 +33,24 @@ const favoriteSchema = new mongoose.Schema({
 const Favorite = mongoose.model("Favorite", favoriteSchema);
 
 // Add to favorites
-app.post("/api/favorites", async (req, res) => {
+app.put("/api/favorites", async (req, res) => {
   const { symbol, name, image } = req.body;
 
   try {
-    const exists = await Favorite.findOne({ symbol });
-    if (exists) return res.status(200).json({ message: "Already favorited" });
+    const existing = await Favorite.findOne({ symbol });
 
-    const fav = new Favorite({ symbol, name, image });
-    await fav.save();
-    res.status(201).json({ message: "Added to favorites" });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to save favorite" });
+    if (existing) {
+      await Favorite.deleteOne({ symbol });
+      return res.status(200).json({ message: "Removed from favorites", status: "removed" });
+    } else {
+      const newFav = new Favorite({ symbol, name, image });
+      await newFav.save();
+      return res.status(201).json({ message: "Added to favorites", status: "added" });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to toggle favorite" });
   }
 });
-
 // Get all favorites
 app.get("/api/favorites", async (req, res) => {
   try {
