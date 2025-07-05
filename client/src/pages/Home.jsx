@@ -20,7 +20,7 @@ const Home = () => {
   // Fetch favorites from backend
   useEffect(() => {
     axios
-      .get("https://cryptopulse-ovx6.vercel.app//api/favorites")
+      .get("https://cryptopulse-ovx6.vercel.app/api/favorites")
       .then((res) => setFavorites(res.data.map((fav) => fav.symbol)))
       .catch((err) => console.error("Error fetching favorites", err));
   }, []);
@@ -67,7 +67,7 @@ const Home = () => {
 
   const handleDownload = async () => {
     try {
-      const response = await axios.get("https://cryptopulse-ovx6.vercel.app//api/coins-report", {
+      const response = await axios.get("https://cryptopulse-ovx6.vercel.app/api/coins-report", {
         responseType: "blob",
       });
 
