@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 5000;
 require('dotenv').config();
 const axios = require('axios');
 const PDFDocument = require('pdfkit');
-const cors = require('cors');
+
 
 const allowedOrigins = [
   'http://localhost:5173',
