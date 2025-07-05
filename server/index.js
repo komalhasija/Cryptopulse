@@ -19,6 +19,7 @@ app.use(cors({
 app.options('*', cors());
 
 app.use(express.json());
+
 mongoose.connect('mongodb+srv://komalhasija4020:komal@cluster0.uqh7o0g.mongodb.net/', {
   useNewUrlParser: true,
   useUnifiedTopology: true
