@@ -35,8 +35,7 @@ const CoinContextProvider = (props) => {
     // Cleanup old socket if exists
     if (ws.current) ws.current.close();
 
-    // Create WebSocket connection
-    ws.current = new WebSocket(`wss://ws.coincap.io/prices?assets=${ASSETS.join(",")}`);
+     ws.current = new WebSocket(`wss://wss.coincap.io/prices?assets=${ASSETS.join(",")}&apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`);
 
     ws.current.onmessage = (msg) => {
       const data = JSON.parse(msg.data);
