@@ -41,12 +41,20 @@ const CoinContextProvider = (props) => {
     ws.current.onmessage = (msg) => {
       const data = JSON.parse(msg.data);
       setAllCoin((prev) =>
-        prev.map((coin) =>
-          data[coin.id]
-            ? { ...coin, priceUsd: data[coin.id] }
-            : coin
-        )
-      );
+      prev.map((coin) =>
+        data[coin.id?.toLowerCase()] // normalize key
+          ? { ...coin, priceUsd: data[coin.id.toLowerCase()] }
+          : coin
+      )
+    );
+
+      // setAllCoin((prev) =>
+      //   prev.map((coin) =>
+      //     data[coin.id]
+      //       ? { ...coin, priceUsd: data[coin.id] }
+      //       : coin
+      //   )
+      // );
     };
 
     ws.current.onerror = (err) => {
