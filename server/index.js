@@ -11,7 +11,8 @@ const PDFDocument = require('pdfkit');
 
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://cryptopulse-1.onrender.com'
+  'https://cryptopulse-1.onrender.com',
+  'https://cryptopulse-one.vercel.app'
 ];
 
 app.use(cors({
