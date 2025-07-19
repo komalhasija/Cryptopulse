@@ -95,7 +95,7 @@ app.get('/api/coins-report', async (req, res) => {
       }
     );
    
-    const coins = response.data.data;
+    const coins = response.data;
 
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
 
