@@ -82,11 +82,18 @@ app.get("/api/favorites", async (req, res) => {
 
 app.get('/api/coins-report', async (req, res) => {
   try {
-    const response = await axios.get(
-      `https://rest.coincap.io/v3/assets?apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`,
-
+     const response = await axios.get(
+      `https://api.coingecko.com/api/v3/coins/markets`,
+      {
+        params: {
+          vs_currency: "usd",
+          order: "market_cap_desc",
+          per_page: 50,
+          page: 1,
+          sparkline: false,
+        },
+      }
     );
-
    
     const coins = response.data.data;
 

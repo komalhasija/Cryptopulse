@@ -10,19 +10,28 @@ const CoinContextProvider = (props) => {
   });
 
   const ws = useRef(null);
-  const ASSETS = ["bitcoin", "ethereum", "solana", "dogecoin", "cardano", "litecoin", "xrp", "avalanche", "tron"];
 
-  // Initial fetch to get static info about coins
+  // Binance symbols: map ids to binance pairs
+  const ASSETS = [
+    { id: "bitcoin", symbol: "btcusdt" },
+    { id: "ethereum", symbol: "ethusdt" },
+    { id: "solana", symbol: "solusdt" },
+    { id: "dogecoin", symbol: "dogeusdt" },
+    { id: "cardano", symbol: "adausdt" },
+    { id: "litecoin", symbol: "ltcusdt" },
+    { id: "xrp", symbol: "xrpusdt" },
+    { id: "avalanche", symbol: "avaxusdt" },
+    { id: "tron", symbol: "trxusdt" },
+  ];
+
+  // Fetch static metadata (can still use CoinCap or CoinGecko here)
   const fetchInitialData = async () => {
     try {
       const res = await fetch(
-        `https://rest.coincap.io/v3/assets?apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`,
-        
-      );
-      const data = await res.json();
-      // Only pick required assets
-      const filtered = data.data;
-      console.log(filtered)
+      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false`
+    );
+ const data = await res.json();
+      const filtered = data;
       setAllCoin(filtered);
     } catch (error) {
       console.error("Initial data fetch error:", error);
@@ -32,28 +41,27 @@ const CoinContextProvider = (props) => {
   useEffect(() => {
     fetchInitialData();
 
-    // Cleanup old socket if exists
-    if (ws.current) ws.current.close();
+    // Setup combined Binance WebSocket stream
+    const streamNames = ASSETS.map((a) => `${a.symbol}@trade`).join("/");
+    const socketUrl = `wss://stream.binance.com:9443/stream?streams=${streamNames}`;
 
-     ws.current = new WebSocket(`wss://wss.coincap.io/prices?assets=${ASSETS.join(",")}&apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`);
+    ws.current = new WebSocket(socketUrl);
 
-    ws.current.onmessage = (msg) => {
-      const data = JSON.parse(msg.data);
+    ws.current.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      const symbol = msg.data.s.toLowerCase(); // e.g., btcusdt
+      const price = msg.data.p;
+
+      const asset = ASSETS.find((a) => a.symbol === symbol);
+      if (!asset) return;
+
       setAllCoin((prev) =>
-      prev.map((coin) =>
-        data[coin.id?.toLowerCase()] // normalize key
-          ? { ...coin, priceUsd: data[coin.id.toLowerCase()] }
-          : coin
-      )
-    );
-
-      // setAllCoin((prev) =>
-      //   prev.map((coin) =>
-      //     data[coin.id]
-      //       ? { ...coin, priceUsd: data[coin.id] }
-      //       : coin
-      //   )
-      // );
+        prev.map((coin) =>
+          coin.id === asset.id
+            ? { ...coin, current_price: parseFloat(price) }
+            : coin
+        )
+      );
     };
 
     ws.current.onerror = (err) => {
@@ -79,3 +87,4 @@ const CoinContextProvider = (props) => {
 };
 
 export default CoinContextProvider;
+

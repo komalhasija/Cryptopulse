@@ -6,20 +6,20 @@ import LineChart from "../components/LineChart";
 import { Moon, Sun } from "lucide-react";
 
 const Coin = () => {
-  const { coinId } = useParams();
+  const { coinId } = useParams(); // e.g., 'bitcoin'
   const [coinData, setCoinData] = useState(null);
   const [historicalData, setHistoricalData] = useState(null);
-  const { currency } = useContext(CoinContext);
 
+  const { allCoin, currency } = useContext(CoinContext);
   const { theme, darkMode, toggleTheme } = useContext(ThemeContext);
 
   const fetchCoinData = async () => {
     try {
       const res = await fetch(
-        `https://rest.coincap.io/v3/assets/${coinId}?apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`
+        `https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=false&community_data=false&developer_data=false&sparkline=false`
       );
       const data = await res.json();
-      setCoinData(data.data);
+      setCoinData(data);
     } catch (err) {
       console.error("Error fetching coin data:", err);
     }
@@ -28,15 +28,14 @@ const Coin = () => {
   const fetchHistoricalData = async () => {
     try {
       const res = await fetch(
-        `https://rest.coincap.io/v3/assets/${coinId}/history?interval=d1&apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`
+        `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=${currency.name}&days=30&interval=daily`
       );
-      const result = await res.json();
+      const data = await res.json();
 
-      const prices = result.data.map((entry) => [
-        new Date(entry.time).getTime(),
-        parseFloat(entry.priceUsd),
+      const prices = data.prices.map(([time, price]) => [
+        time,
+        parseFloat(price),
       ]);
-
       setHistoricalData({ prices });
     } catch (err) {
       console.error("Error fetching historical data:", err);
@@ -46,28 +45,26 @@ const Coin = () => {
   useEffect(() => {
     fetchCoinData();
     fetchHistoricalData();
-  }, [currency, coinId]);
+  }, [coinId, currency]);
 
+  // Inject WebSocket live price if available in allCoin
   useEffect(() => {
-    const ws = new WebSocket(
-      `wss://wss.coincap.io/prices?assets=${coinId}&apiKey=57ba7d67d68d756cb4503d0321f5a1e3bb3fbfa1dcfeb5456eacf0cec39631e6`
-    );
+    if (!coinData) return;
 
-    ws.onmessage = (msg) => {
-      const data = JSON.parse(msg.data);
-      if (data[coinId]) {
-        setCoinData((prev) =>
-          prev ? { ...prev, priceUsd: data[coinId] } : null
-        );
-      }
-    };
-
-    ws.onerror = (err) => {
-      console.error("WebSocket error:", err);
-    };
-
-    return () => ws.close();
-  }, [coinId]);
+    const liveCoin = allCoin.find((c) => c.id === coinId);
+    if (liveCoin && liveCoin.current_price) {
+      setCoinData((prev) => ({
+        ...prev,
+        market_data: {
+          ...prev.market_data,
+          current_price: {
+            ...prev.market_data.current_price,
+            [currency.name]: liveCoin.current_price,
+          },
+        },
+      }));
+    }
+  }, [allCoin, coinData, coinId, currency.name]);
 
   if (!coinData || !historicalData) {
     return (
@@ -79,9 +76,11 @@ const Coin = () => {
     );
   }
 
+  const marketData = coinData.market_data;
+
   return (
     <div className={`${theme.bg} ${theme.text} min-h-screen px-5 py-5`}>
-      {/* Theme toggle button */}
+      {/* Theme Toggle */}
       <div className="flex justify-end mb-4">
         <button
           onClick={toggleTheme}
@@ -108,30 +107,30 @@ const Coin = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-6xl mx-auto py-10">
-        {/* Left: Line Chart */}
+        {/* Chart */}
         <div className="h-64">
           <LineChart historicalData={historicalData} currency={currency.name} />
         </div>
 
-        {/* Right: Coin Stats */}
+        {/* Stats */}
         <div className="space-y-4 m-5">
           {[
-            ["Crypto Market Rank", `#${coinData.rank}`],
+            ["Crypto Market Rank", `#${coinData.market_cap_rank}`],
             [
               "Current Price",
-              `${currency.symbol} ${parseFloat(coinData.priceUsd).toFixed(2)}`,
+              `${currency.symbol} ${marketData.current_price[currency.name].toLocaleString()}`,
             ],
             [
               "Market Cap",
-              `${currency.symbol} ${parseFloat(coinData.marketCapUsd).toLocaleString()}`,
+              `${currency.symbol} ${marketData.market_cap[currency.name]?.toLocaleString()}`,
             ],
             [
               "24 Hour Volume",
-              `${currency.symbol} ${parseFloat(coinData.volumeUsd24Hr).toLocaleString()}`,
+              `${currency.symbol} ${marketData.total_volume[currency.name]?.toLocaleString()}`,
             ],
             [
               "Change (24H)",
-              `${parseFloat(coinData.changePercent24Hr).toFixed(2)}%`,
+              `${marketData.price_change_percentage_24h_in_currency[currency.name]?.toFixed(2)}%`,
             ],
           ].map(([label, value], idx) => (
             <ul

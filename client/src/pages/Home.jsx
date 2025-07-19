@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { CoinContext } from "../context/CoinContext";
-import { ImageContext } from "../context/ImageContext";
+import { ImageContext } from "../context/ImageContext"; // If you want to keep it, else remove
 import { ThemeContext } from "../context/ThemeContext";
 import { Link } from "react-router-dom";
 import { Moon, Sun, Download, Star } from "lucide-react";
@@ -8,11 +8,10 @@ import axios from "axios";
 
 const Home = () => {
   const { allCoin, currency } = useContext(CoinContext);
-  const { images } = useContext(ImageContext);
+  // You may remove ImageContext if not needed now
   const { theme, darkMode, toggleTheme } = useContext(ThemeContext);
 
   const [favorites, setFavorites] = useState([]);
-  const [combinedCoinData, setCombinedCoinData] = useState([]);
   const [displayCoin, setDisplayCoin] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,43 +20,32 @@ const Home = () => {
   useEffect(() => {
     axios
       .get("https://cryptopulse-0kea.onrender.com/api/favorites")
-      .then((res) => setFavorites(res.data.map((fav) => fav.symbol)))
+      .then((res) => setFavorites(res.data.map((fav) => fav.symbol.toLowerCase())))
       .catch((err) => console.error("Error fetching favorites", err));
   }, []);
 
-  // Merge CoinCap + CoinGecko data
+  // Setup displayCoin whenever allCoin or favorites change
   useEffect(() => {
-    const merged = allCoin.map((coin) => {
-      const matched = images.find(
-        (img) => img.symbol.toLowerCase() === coin.symbol.toLowerCase()
-      );
-      return {
-        ...coin,
-        image: matched?.image || "/fallback-icon.png",
-        price_change_percentage_24h:
-          matched?.price_change_percentage_24h || coin.changePercent24Hr,
-      };
-    });
+    if (!allCoin.length) return;
 
-    // Sort so favorites come first
-    const sorted = merged.sort((a, b) => {
-      const aIsFav = favorites.includes(a.symbol);
-      const bIsFav = favorites.includes(b.symbol);
+    // Sort favorites to top
+    const sorted = [...allCoin].sort((a, b) => {
+      const aIsFav = favorites.includes(a.symbol.toLowerCase());
+      const bIsFav = favorites.includes(b.symbol.toLowerCase());
       return aIsFav === bIsFav ? 0 : aIsFav ? -1 : 1;
     });
 
-    setCombinedCoinData(sorted);
     setDisplayCoin(sorted);
-  }, [allCoin, images, favorites]);
+  }, [allCoin, favorites]);
 
   const inputHandler = (e) => {
     setInput(e.target.value);
-    if (e.target.value === "") setDisplayCoin(combinedCoinData);
+    if (e.target.value === "") setDisplayCoin(allCoin);
   };
 
   const searchHandler = (e) => {
     e.preventDefault();
-    const filtered = combinedCoinData.filter((coin) =>
+    const filtered = allCoin.filter((coin) =>
       coin.name.toLowerCase().includes(input.toLowerCase())
     );
     setDisplayCoin(filtered);
@@ -65,9 +53,10 @@ const Home = () => {
 
   const handleDownload = async () => {
     try {
-      const response = await axios.get("https://cryptopulse-0kea.onrender.com/api/coins-report", {
-        responseType: "blob",
-      });
+      const response = await axios.get(
+        "https://cryptopulse-0kea.onrender.com/api/coins-report",
+        { responseType: "blob" }
+      );
 
       if (response.status !== 200) throw new Error("Download failed");
 
@@ -88,7 +77,9 @@ const Home = () => {
     <div className={`${theme.bg} ${theme.text} min-h-screen`}>
       <div className="flex min-h-screen">
         {/* Sidebar */}
-        <aside className={`w-72 ${theme.panel} p-6 space-y-6 border-r border-gray-300 sticky top-0 h-screen`}>
+        <aside
+          className={`w-72 ${theme.panel} p-6 space-y-6 border-r border-gray-300 sticky top-0 h-screen`}
+        >
           <h2 className="text-3xl font-bold tracking-wide">CryptoPulse</h2>
 
           <form onSubmit={searchHandler} className="flex flex-col gap-3">
@@ -119,29 +110,41 @@ const Home = () => {
             onClick={toggleTheme}
             className={`flex items-center gap-2 py-2 px-4 rounded-md ${theme.button}`}
           >
-            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {darkMode ? (
+              <Sun className="w-4 h-4" />
+            ) : (
+              <Moon className="w-4 h-4" />
+            )}
             Toggle Theme
           </button>
         </aside>
 
         {/* Main Grid */}
-        <main className={`flex-1 p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 ${theme.bg}`}>
+        <main
+          className={`flex-1 p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 ${theme.bg}`}
+        >
           {displayCoin.slice(0, 20).map((coin) => {
-            const isFav = favorites.includes(coin.symbol);
+            const isFav = favorites.includes(coin.symbol.toLowerCase());
+
             const handleFavClick = async (e) => {
               e.preventDefault();
               setLoading(true);
               try {
-                const res = await axios.post("https://cryptopulse-0kea.onrender.com/api/favorites", {
-                  symbol: coin.symbol,
-                  name: coin.name,
-                  image: coin.image,
-                });
+                const res = await axios.post(
+                  "https://cryptopulse-0kea.onrender.com/api/favorites",
+                  {
+                    symbol: coin.symbol,
+                    name: coin.name,
+                    image: coin.image,
+                  }
+                );
 
                 if (res.data.status === "added") {
-                  setFavorites((prev) => [...prev, coin.symbol]);
+                  setFavorites((prev) => [...prev, coin.symbol.toLowerCase()]);
                 } else if (res.data.status === "removed") {
-                  setFavorites((prev) => prev.filter((sym) => sym !== coin.symbol));
+                  setFavorites((prev) =>
+                    prev.filter((sym) => sym !== coin.symbol.toLowerCase())
+                  );
                 }
               } catch (err) {
                 console.error("Error toggling favorite:", err);
@@ -149,7 +152,6 @@ const Home = () => {
                 setLoading(false);
               }
             };
-
 
             return (
               <Link
@@ -170,19 +172,28 @@ const Home = () => {
                   <img src={coin.image} alt={coin.name} className="w-12 h-12" />
                   <div>
                     <h3 className="text-lg font-semibold">{coin.name}</h3>
-                    <span className={`text-sm ${theme.subtext}`}>({coin.symbol.toUpperCase()})</span>
+                    <span className={`text-sm ${theme.subtext}`}>
+                      ({coin.symbol.toUpperCase()})
+                    </span>
                   </div>
                 </div>
 
                 <div className="space-y-1">
                   <p className="text-xl font-bold">
-                    {currency.symbol} {parseFloat(coin.priceUsd).toFixed(2)}
+                    {currency.symbol} {coin.current_price?.toFixed(2)}
                   </p>
-                  <p className={`font-medium ${coin.price_change_percentage_24h > 0 ? "text-green-500" : "text-red-500"}`}>
-                    24h: {parseFloat(coin.price_change_percentage_24h).toFixed(2)}%
+                  <p
+                    className={`font-medium ${
+                      coin.price_change_percentage_24h > 0
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }`}
+                  >
+                    24h: {coin.price_change_percentage_24h?.toFixed(2)}%
                   </p>
                   <p className={`text-sm ${theme.subtext}`}>
-                    Market Cap: {currency.symbol} {parseFloat(coin.marketCapUsd).toLocaleString()}
+                    Market Cap: {currency.symbol}{" "}
+                    {coin.market_cap?.toLocaleString()}
                   </p>
                 </div>
               </Link>
