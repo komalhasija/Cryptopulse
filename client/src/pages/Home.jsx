@@ -52,26 +52,26 @@ const Home = () => {
   };
 
   const handleDownload = async () => {
-    try {
-      const response = await axios.get(
-        "https://cryptopulse-0kea.onrender.com/api/coins-report",
-        { responseType: "blob" }
-      );
+  try {
+    const response = await axios.get(
+      "https://cryptopulse-0kea.onrender.com/api/coins-report", // ✅ use deployed backend
+      { responseType: "blob" }
+    );
 
-      if (response.status !== 200) throw new Error("Download failed");
+    if (response.status !== 200) throw new Error("Download failed");
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "crypto_report.pdf";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Download error:", err);
-    }
-  };
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "crypto_report.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Download error:", err);
+  }
+};
 
   return (
     <div className={`${theme.bg} ${theme.text} min-h-screen`}>
