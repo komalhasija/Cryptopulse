@@ -22,15 +22,22 @@ const CoinContextProvider = (props) => {
     { id: "xrp", symbol: "xrpusdt" },
     { id: "avalanche", symbol: "avaxusdt" },
     { id: "tron", symbol: "trxusdt" },
+    { id: "binancecoin", symbol: "bnbusdt" },       // BNB
+    { id: "tether", symbol: "usdtusdt" },           // USDT-USDT doesn't exist, so usually USDT is a base stablecoin
+    { id: "usd-coin", symbol: "usdcusdt" },         // USDC
+    { id: "ripple", symbol: "xrpusdt" },             // XRP
+    { id: "dogecoin", symbol: "dogeusdt" },          // DOGE
+    { id: "cardano", symbol: "adausdt" },
+
   ];
 
   // Fetch static metadata (can still use CoinCap or CoinGecko here)
   const fetchInitialData = async () => {
     try {
       const res = await fetch(
-      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false`
-    );
- const data = await res.json();
+        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false`
+      );
+      const data = await res.json();
       const filtered = data;
       setAllCoin(filtered);
     } catch (error) {
