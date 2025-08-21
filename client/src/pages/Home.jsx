@@ -55,7 +55,7 @@ const handleDownload = async () => {
   try {
     setLoading(true);
     const response = await axios.get(
-      "http://localhost:5000/api/coins-report",
+      "https://cryptopulse-0kea.onrender.com/api/coins-report",
       { 
         responseType: "blob",
         withCredentials: true // Include credentials if needed
