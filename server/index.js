@@ -17,6 +17,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://cryptopulse-1.onrender.com",
   "https://cryptopulse-murex.vercel.app",
+  "https://cryptopulse-0kea.onrender.com", // Add this line
 ];
 
 app.use(cors({
