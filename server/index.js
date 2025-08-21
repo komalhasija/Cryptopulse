@@ -1,175 +1,49 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const mongoose = require('mongoose');
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import connectDB from "./config/db.js";
+import coinRoutes from "./routes/CoinRoute.js";
+import favoriteRoutes from "./routes/favoriteRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
+import fetchHistoricalData from "./cron/fetchHistoricalData.js";
+
+dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 5000;
-require('dotenv').config();
-const axios = require('axios');
-const PDFDocument = require('pdfkit');
 
-
+// CORS setup
 const allowedOrigins = [
-  'http://localhost:5173',
-  'https://cryptopulse-1.onrender.com',
-  'https://cryptopulse-murex.vercel.app'
+  "http://localhost:5173",
+  "https://cryptopulse-1.onrender.com",
+  "https://cryptopulse-murex.vercel.app",
 ];
 
 app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin) return callback(null, true); // allow non-browser requests like Postman
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `The CORS policy for this site does not allow access from the specified Origin.`;
-      return callback(new Error(msg), false);
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (!allowedOrigins.includes(origin)) {
+      return callback(new Error("Not allowed by CORS"), false);
     }
     return callback(null, true);
   },
-  credentials: true // if you need to send cookies/auth headers
+  credentials: true,
 }));
 
 app.use(express.json());
-mongoose.connect('mongodb+srv://komalhasija4020:komal@cluster0.uqh7o0g.mongodb.net/', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-  .then(() => {
-    console.log('✅ Connected to MongoDB Atlas successfully!');
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err);
-  });
 
-const favoriteSchema = new mongoose.Schema({
-  symbol: String,
-  name: String,
-  image: String,
-});
+// Connect Database
+connectDB();
 
+// Routes
+app.use("/api/coins", coinRoutes);
+app.use("/api/favorites", favoriteRoutes);
+app.use("/api/coins-report", reportRoutes);
 
-const Favorite = mongoose.model("Favorite", favoriteSchema);
+// Start server
+app.listen(PORT, () =>
+  console.log(`🚀 Server running on http://localhost:${PORT}`)
+);
 
-// Add to favorites
-app.post("/api/favorites", async (req, res) => {
-  const { symbol, name, image } = req.body;
-
-  try {
-    const existing = await Favorite.findOne({ symbol });
-
-    if (existing) {
-      await Favorite.deleteOne({ symbol });
-      return res.status(200).json({ message: "Removed from favorites", status: "removed" });
-    } else {
-      const newFav = new Favorite({ symbol, name, image });
-      await newFav.save();
-      return res.status(201).json({ message: "Added to favorites", status: "added" });
-    }
-  } catch (error) {
-    return res.status(500).json({ error: "Failed to toggle favorite" });
-  }
-});
-
-// Get all favorites
-app.get("/api/favorites", async (req, res) => {
-  try {
-    const favorites = await Favorite.find();
-    res.json(favorites);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch favorites" });
-  }
-});
-
-app.get('/api/coins-report', async (req, res) => {
-  try {
-    const response = await axios.get(
-      `https://api.coingecko.com/api/v3/coins/markets`,
-      {
-        params: {
-          vs_currency: "usd",
-          order: "market_cap_desc",
-          per_page: 50,
-          page: 1,
-          sparkline: false,
-        },
-      }
-    );
-
-    const coins = response.data; // CoinGecko returns array directly
-
-    const doc = new PDFDocument({ margin: 40, size: 'A4' });
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=crypto_report.pdf');
-
-    doc.pipe(res);
-
-    // Title
-    doc.fontSize(22).fillColor('#4B0082').text('CryptoPulse Coin Report', { align: 'center' });
-    doc.moveDown(1);
-
-    // Subtitle / date
-    const now = new Date().toLocaleString();
-    doc.fontSize(10).fillColor('gray').text(`Generated on: ${now}`, { align: 'center' });
-    doc.moveDown(2);
-
-    // Table header
-    const tableTop = doc.y;
-    const itemX = 40;
-    const symbolX = 150;
-    const priceX = 250;
-    const marketCapX = 350;
-    const changeX = 470;
-
-    doc
-      .fontSize(12)
-      .fillColor('#000')
-      .text('Coin', itemX, tableTop, { bold: true })
-      .text('Symbol', symbolX, tableTop)
-      .text('Price (USD)', priceX, tableTop)
-      .text('Market Cap', marketCapX, tableTop)
-      .text('24h Change', changeX, tableTop);
-
-    doc.moveTo(40, tableTop + 15).lineTo(550, tableTop + 15).stroke();
-
-    // Rows
-    let y = tableTop + 25;
-
-    coins.forEach((coin, index) => {
-      const changePercent = coin.price_change_percentage_24h || 0;
-      const changeColor = changePercent >= 0 ? 'green' : 'red';
-
-      doc
-        .fontSize(10)
-        .fillColor('black')
-        .text(`${index + 1}. ${coin.name}`, itemX, y)
-        .text(coin.symbol.toUpperCase(), symbolX, y)
-        .text(`$${coin.current_price.toFixed(2)}`, priceX, y)
-        .text(`$${coin.market_cap.toLocaleString()}`, marketCapX, y)
-        .fillColor(changeColor)
-        .text(`${changePercent.toFixed(2)}%`, changeX, y);
-
-      y += 20;
-
-      // Add page break if close to bottom
-      if (y > 750) {
-        doc.addPage();
-        y = 40;
-      }
-    });
-
-    // Footer
-    doc
-      .fontSize(9)
-      .fillColor('gray')
-      .text('Generated by CryptoPulse • Powered by CoinGecko API', 40, 780, { align: 'center', width: 500 });
-
-    doc.end();
-
-  } catch (error) {
-    console.error('Error generating PDF:', error);
-    res.status(500).json({ error: 'Failed to generate report' });
-  }
-});
-
-
-
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+// Start Cron job (fetch every 10 min)
+fetchHistoricalData();
