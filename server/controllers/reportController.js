@@ -1,8 +1,13 @@
+
 import axios from "axios";
 import PDFDocument from "pdfkit";
 
 export const generateReport = async (req, res) => {
   try {
+    // Set CORS headers
+    res.setHeader('Access-Control-Allow-Origin', 'https://cryptopulse-0kea.onrender.com');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+
     const response = await axios.get(
       "https://api.coingecko.com/api/v3/coins/markets",
       {
@@ -13,6 +18,7 @@ export const generateReport = async (req, res) => {
           page: 1,
           sparkline: false,
         },
+        timeout: 10000 // Add timeout to prevent hanging requests
       }
     );
 
@@ -27,7 +33,7 @@ export const generateReport = async (req, res) => {
 
     doc.pipe(res);
 
-    // Title
+      // Title
     doc
       .fontSize(22)
       .fillColor("#4B0082")
@@ -93,8 +99,12 @@ export const generateReport = async (req, res) => {
       );
 
     doc.end();
+
   } catch (error) {
     console.error("Error generating PDF:", error);
+    // Ensure proper error response with CORS headers
+    res.setHeader('Access-Control-Allow-Origin', 'https://cryptopulse-0kea.onrender.com');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.status(500).json({ error: "Failed to generate report" });
   }
 };

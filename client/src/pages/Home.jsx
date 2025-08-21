@@ -51,27 +51,39 @@ const Home = () => {
     setDisplayCoin(filtered);
   };
 
-  const handleDownload = async () => {
+const handleDownload = async () => {
   try {
+    setLoading(true);
     const response = await axios.get(
-      "https://cryptopulse-0kea.onrender.com/api/coins-report", // ✅ use deployed backend
-      { responseType: "blob" }
+      "https://cryptopulse-0kea.onrender.com/api/coins-report",
+      { 
+        responseType: "blob",
+        withCredentials: true // Include credentials if needed
+      }
     );
 
-    if (response.status !== 200) throw new Error("Download failed");
+    console.log("Download response status:", response.status);
 
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "crypto_report.pdf";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
+    if (response.status === 200) {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "crypto_report.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } else {
+      throw new Error(`Download failed with status: ${response.status}`);
+    }
   } catch (err) {
     console.error("Download error:", err);
+    alert("Failed to download report. Please try again.");
+  } finally {
+    setLoading(false);
   }
 };
+
 
   return (
     <div className={`${theme.bg} ${theme.text} min-h-screen`}>
