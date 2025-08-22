@@ -5,6 +5,7 @@ import connectDB from "./config/db.js";
 
 import favoriteRoutes from "./routes/favoriteRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
+import authRoutes  from "./routes/authRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -45,6 +46,7 @@ connectDB();
 // API routes
 app.use("/api/favorites", favoriteRoutes);
 app.use("/api/coins-report", reportRoutes);
+app.use("/api/auth",authRoutes);
 
 // Global error handler (CORS + other errors)
 app.use((err, req, res, next) => {
