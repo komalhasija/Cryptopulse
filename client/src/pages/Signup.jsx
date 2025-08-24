@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import axios from 'axios';
@@ -18,9 +18,13 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const { theme } = useContext(ThemeContext);
+  const { theme, darkMode } = useContext(ThemeContext);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the intended destination or default to home
+  const from = location.state?.from?.pathname || '/';
 
   const handleChange = (e) => {
     setFormData({
@@ -68,7 +72,7 @@ const Signup = () => {
         
         // Redirect after a short delay
         setTimeout(() => {
-          navigate('/');
+          navigate(from, { replace: true });
         }, 1500);
       }
     } catch (err) {
@@ -90,12 +94,12 @@ const Signup = () => {
         </Link>
       </div>
 
-      <div className={`max-w-md w-full space-y-8 p-8 rounded-2xl shadow-xl ${theme.card}`}>
+      <div className={`max-w-md w-full space-y-8 p-8 rounded-2xl shadow-xl ${darkMode ? 'bg-[#1e1e1e]' : 'bg-white'}`}>
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold">
+          <h2 className={`mt-6 text-center text-3xl font-extrabold ${theme.text}`}>
             Create your account
           </h2>
-          <p className="mt-2 text-center text-sm">
+          <p className={`mt-2 text-center text-sm ${theme.subtext}`}>
             Or{' '}
             <Link 
               to="/login" 
@@ -122,7 +126,7 @@ const Signup = () => {
           
           <div className="rounded-md shadow-sm space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium mb-1">
+              <label htmlFor="name" className={`block text-sm font-medium mb-1 ${theme.text}`}>
                 Full Name
               </label>
               <input
@@ -131,7 +135,7 @@ const Signup = () => {
                 type="text"
                 autoComplete="name"
                 required
-                className={`relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm ${theme.input}`}
+                className={`relative block w-full px-3 py-3 ${darkMode ? 'bg-gray-800 text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-300'} border placeholder-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm`}
                 placeholder="Full name"
                 value={formData.name}
                 onChange={handleChange}
@@ -139,7 +143,7 @@ const Signup = () => {
             </div>
             
             <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1">
+              <label htmlFor="email" className={`block text-sm font-medium mb-1 ${theme.text}`}>
                 Email address
               </label>
               <input
@@ -148,7 +152,7 @@ const Signup = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className={`relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm ${theme.input}`}
+                className={`relative block w-full px-3 py-3 ${darkMode ? 'bg-gray-800 text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-300'} border placeholder-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm`}
                 placeholder="Email address"
                 value={formData.email}
                 onChange={handleChange}
@@ -156,7 +160,7 @@ const Signup = () => {
             </div>
             
             <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-1">
+              <label htmlFor="password" className={`block text-sm font-medium mb-1 ${theme.text}`}>
                 Password
               </label>
               <div className="relative">
@@ -166,7 +170,7 @@ const Signup = () => {
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                   required
-                  className={`relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm ${theme.input}`}
+                  className={`relative block w-full px-3 py-3 ${darkMode ? 'bg-gray-800 text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-300'} border placeholder-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm`}
                   placeholder="Password (min. 6 characters)"
                   value={formData.password}
                   onChange={handleChange}
@@ -186,7 +190,7 @@ const Signup = () => {
             </div>
             
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
+              <label htmlFor="confirmPassword" className={`block text-sm font-medium mb-1 ${theme.text}`}>
                 Confirm Password
               </label>
               <div className="relative">
@@ -196,7 +200,7 @@ const Signup = () => {
                   type={showConfirmPassword ? "text" : "password"}
                   autoComplete="new-password"
                   required
-                  className={`relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm ${theme.input}`}
+                  className={`relative block w-full px-3 py-3 ${darkMode ? 'bg-gray-800 text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-300'} border placeholder-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm`}
                   placeholder="Confirm password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
@@ -224,7 +228,7 @@ const Signup = () => {
               required
               className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
             />
-            <label htmlFor="terms" className="ml-2 block text-sm">
+            <label htmlFor="terms" className={`ml-2 block text-sm ${theme.text}`}>
               I agree to the <a href="#" className="text-purple-600 hover:text-purple-500">Terms and Conditions</a>
             </label>
           </div>
