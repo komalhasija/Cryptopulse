@@ -91,11 +91,17 @@ export const login = async (req, res, next) => {
 // @access  Private
 export const getMe = async (req, res, next) => {
   try {
+    // Populate favorites if needed
     const user = await User.findById(req.user.id);
 
     res.status(200).json({
       success: true,
-      data: user,
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        createdAt: user.createdAt
+      },
     });
   } catch (err) {
     next(err);

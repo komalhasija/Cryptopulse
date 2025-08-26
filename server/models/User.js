@@ -46,6 +46,13 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
+// Virtual for favorites (optional but useful)
+userSchema.virtual('favorites', {
+  ref: 'Favorite',
+  localField: '_id',
+  foreignField: 'user'
+});
+
 const User = mongoose.model("User", userSchema);
 
 export default User;
