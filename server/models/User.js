@@ -24,6 +24,10 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
       select: false,
     },
+    favorites: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Favorite'
+    }]
   },
   {
     timestamps: true,
@@ -47,7 +51,7 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 // Virtual for favorites (optional but useful)
-userSchema.virtual('favorites', {
+userSchema.virtual('favoritesList', {
   ref: 'Favorite',
   localField: '_id',
   foreignField: 'user'
