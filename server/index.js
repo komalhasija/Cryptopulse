@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 5000;
 // CORS setup
 const allowedOrigins = [
   "http://localhost:5173", // local dev
-  "https://cryptopulse-murex.vercel.app",
+  "https://cryptopulse-vqr6.vercel.app",
   "https://cryptopulse-1.onrender.com"
 ];
 
