@@ -317,21 +317,12 @@ return (
                       </div>
 
                       <Link
-                        to="/profile"
+                        to="/"
                         className={`flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 ${hoverColor} transition-colors`}
                         onClick={() => setProfileDropdownOpen(false)}
                       >
                         <User className="w-4 h-4 mr-2" />
                         Profile
-                      </Link>
-
-                      <Link
-                        to="/portfolio"
-                        className={`flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 ${hoverColor} transition-colors`}
-                        onClick={() => setProfileDropdownOpen(false)}
-                      >
-                        <Wallet className="w-4 h-4 mr-2" />
-                        Portfolio
                       </Link>
 
                       <div className={`border-t ${borderColor} my-1`} />
